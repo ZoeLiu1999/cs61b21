@@ -106,14 +106,77 @@ public class Model extends Observable {
      *    value, then the leading two tiles in the direction of motion merge,
      *    and the trailing tile does not.
      * */
+
+
+    private int num(int c,int r){
+        int n = 0;
+        for(int i = r + 1; i < board.size(); i+=1){
+            if((if_null(c,i))&&(board.tile(c,i).value()!=board.tile(c,r).value())){
+                break;
+            } else {
+                n+=1;
+            }
+        }
+        return n;
+    }
+    private int num_abnormal(int c,int r){
+        int n = 0;
+        for(int i = r + 1; i < board.size(); i+=1){
+            if(if_null(c,i)){
+                break;
+            } else {
+                n+=1;
+            }
+        }
+        return n;
+    }
+
+    private boolean if_null(int c, int r){
+        Tile t = board.tile(c,r);
+        if (t != null){
+            return true;
+        }
+        return false;
+    }
+
     public boolean tilt(Side side) {
         boolean changed;
         changed = false;
+        boolean last_status;
+        board.setViewingPerspective(side);
+            for ( int c=0; c < board.size(); c += 1){
+                last_status = false;
+                for ( int r = board.size() - 2; r >= 0 ; r -= 1){
+                    Tile t = board.tile(c,r);
+                    if ((t != null)&&(last_status) ) {
+                        int n = num_abnormal(c, r);
+                        if (n != 0) {
+                            board.move(c, r + n, t);
+                            changed = true;
+                            last_status = false;
+                        }
+                    }else if(t != null){
+                            int n = num(c,r);
+                            if (n != 0) {
+                                if(if_null(c, r + n)) {
+                                    last_status = true;
+                                    changed = true;
+                                    score += t.value()*2;
+                                    board.move(c, r + n, t);
+                                } else{
+                                    last_status = false;
+                                    changed = true;
+                                    board.move(c, r + n, t);
+                                }
+                            }
+                    }
+                }
+            }
 
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
-        // changed local variable to true.
-
+        // changed local variable to true. b.tile(i,n)
+        board.setViewingPerspective(Side.NORTH);
         checkGameOver();
         if (changed) {
             setChanged();
@@ -138,6 +201,13 @@ public class Model extends Observable {
      * */
     public static boolean emptySpaceExists(Board b) {
         // TODO: Fill in this function.
+        for(int i=0; i< b.size(); i+=1){
+            for(int n=0; n< b.size(); n+=1){
+                if(b.tile(i,n)==null){
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -148,6 +218,13 @@ public class Model extends Observable {
      */
     public static boolean maxTileExists(Board b) {
         // TODO: Fill in this function.
+        for(int i=0; i< b.size(); i+=1){
+            for(int n=0; n< b.size(); n+=1){
+                if((b.tile(i,n)!=null)&&(b.tile(i,n).value()==MAX_PIECE)){
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -159,6 +236,29 @@ public class Model extends Observable {
      */
     public static boolean atLeastOneMoveExists(Board b) {
         // TODO: Fill in this function.
+        if(emptySpaceExists(b)==true){
+            return true;
+        }
+        else{
+            for(int i=0; i< b.size(); i+=1){
+                for(int n=0; n< b.size(); n+=1){
+                    if(b.tile(i,n)!=null){
+                        if((i+1<b.size())&&(b.tile(i+1,n)!=null)&&(b.tile(i,n).value()==b.tile(i+1,n).value())){
+                            return true;
+                        }
+                        else if((i-1>=0)&&(b.tile(i-1,n)!=null)&&(b.tile(i,n).value()==b.tile(i-1,n).value())){
+                            return true;
+                        }
+                        else if((n+1<b.size())&&(b.tile(i,n+1)!=null)&&(b.tile(i,n).value()==b.tile(i,n+1).value())){
+                            return true;
+                        }
+                        else if((n-1>=0)&&(b.tile(i,n-1)!=null)&&(b.tile(i,n).value()==b.tile(i,n-1).value())){
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
         return false;
     }
 
